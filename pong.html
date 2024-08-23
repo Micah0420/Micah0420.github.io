@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pong Game with Bot</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black;
+        }
+
+        canvas {
+            border: 2px solid white;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            width: 100%;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">0 : 0</div>
+    <canvas id="pongCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('pongCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const paddleWidth = 10;
+        const paddleHeight = 100;
+        const ballRadius = 10;
+        const paddleSpeed = 6;
+        let ballSpeedX = 4;
+        let ballSpeedY = 4;
+
+        let leftPaddleY = (canvas.height - paddleHeight) / 2;
+        let rightPaddleY = (canvas.height - paddleHeight) / 2;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+
+        let leftScore = 0;
+        let rightScore = 0;
+
+        // Move left paddle with mouse
+        canvas.addEventListener('mousemove', (e) => {
+            const canvasRect = canvas.getBoundingClientRect();
+            leftPaddleY = e.clientY - canvasRect.top - paddleHeight / 2;
+
+            if (leftPaddleY < 0) {
+                leftPaddleY = 0;
+            } else if (leftPaddleY > canvas.height - paddleHeight) {
+                leftPaddleY = canvas.height - paddleHeight;
+            }
+        });
+
+        function moveRightPaddle() {
+            // Simple AI for the bot to follow the ball
+            if (ballY > rightPaddleY + paddleHeight / 2) {
+                rightPaddleY += paddleSpeed;
+            } else if (ballY < rightPaddleY + paddleHeight / 2) {
+                rightPaddleY -= paddleSpeed;
+            }
+
+            // Prevent the paddle from going out of bounds
+            if (rightPaddleY < 0) {
+                rightPaddleY = 0;
+            } else if (rightPaddleY > canvas.height - paddleHeight) {
+                rightPaddleY = canvas.height - paddleHeight;
+            }
+        }
+
+        function drawPaddles() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(10, leftPaddleY, paddleWidth, paddleHeight);
+            ctx.fillRect(canvas.width - paddleWidth - 10, rightPaddleY, paddleWidth, paddleHeight);
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX *= -1;
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = `${leftScore} : ${rightScore}`;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPaddles();
+            drawBall();
+
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballY + ballRadius > canvas.height || ballY - ballRadius < 0) {
+                ballSpeedY *= -1;
+            }
+
+            if (ballX - ballRadius < 20 && ballY > leftPaddleY && ballY < leftPaddleY + paddleHeight) {
+                ballSpeedX *= -1;
+            }
+
+            if (ballX + ballRadius > canvas.width - 20 && ballY > rightPaddleY && ballY < rightPaddleY + paddleHeight) {
+                ballSpeedX *= -1;
+            }
+
+            if (ballX - ballRadius < 0) {
+                rightScore++;
+                updateScore();
+                resetBall();
+            }
+
+            if (ballX + ballRadius > canvas.width) {
+                leftScore++;
+                updateScore();
+                resetBall();
+            }
+
+            moveRightPaddle();
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
+
